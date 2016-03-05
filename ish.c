@@ -16,6 +16,7 @@ char* prompt()
 void eval(char* s)
 {
 	// TODO: Allow arguements
+	printf("buf (%s)\n",s);
 	char* argv[2];
 	argv[0] = s;
 	argv[1] = NULL;
@@ -27,11 +28,15 @@ void eval(char* s)
 void run (char* s, char** argv)
 {
 	int pid = fork();
+	int r = 0;
 	switch (pid)
 	{
 		case 0:
-			execvp(s,argv);
+			r = execvp(s,argv);
+			if (r < 0) perror("execvp");
 			break;
+		case -1:
+			perror("fork");
 		default:
 			waitpid(pid,NULL,0);
 	}
@@ -41,8 +46,12 @@ int main (int argc, char** argv)
 	char c;
 	int bufsize = 100;
 	int curbuf = 0;
-	// TODO: Catch malloc errors
 	char* buf = (char*)malloc(bufsize);
+	if (buf == NULL)
+	{
+		perror("malloc");
+		return 1;
+	}
 	printf(prompt());
 	while (c != EOF)
 	{
@@ -51,7 +60,7 @@ int main (int argc, char** argv)
 		{
 			case '\n':
 				eval(buf);
-				printf(prompt());
+				curbuf = 0;
 				break;
 			case EOF:
 				break;
@@ -64,10 +73,14 @@ int main (int argc, char** argv)
 				else
 				{
 					bufsize = bufsize*2;
-					// TODO: Catch realloc errors
 					buf = realloc(buf,bufsize);
+					if (buf == NULL) 
+					{
+						perror("realloc");
+						return 1;
+					}
 				}
 		}
-		//printf("buf: (%s) curbuf: %d\n",buf,curbuf);
 	}
+	free(buf);
 }
