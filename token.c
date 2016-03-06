@@ -31,14 +31,13 @@ char** tokenize(char* s, char delim)
 	char** ret = (char**)malloc(retsize);
 	int index = 0;
 	if (ret == NULL) return ret;
-	char* c = 1;
 	char* old = s;
-	for (int i = 0, char c = 1; c != 0; i++,c = s[i])
+	for (int i = 0; s[i] != 0; i++)
 	{
-		if (c == delim)
+		if (s[i] == delim)
 		{
 			retsize = retsize+sizeof(char*);
-			ret = realloc(resize);
+			ret = realloc(ret,retsize);
 			if (ret == NULL) return ret;
 			ret[index] = old;
 			old = &s[i+1];

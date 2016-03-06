@@ -1,2 +1,2 @@
-char** tokenize(char* s);
+char** tokenize(char* s,char delim);
 
