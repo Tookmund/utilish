@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "ish.h"
+#include "token.h"
 
 void prompt()
 {
@@ -65,39 +66,7 @@ int run (char* s)
 }
 char** getargv(char* s)
 {
-	char** argv = (char**)malloc(2*sizeof(char*));
-	if (argv == NULL)
-	{
-		perror("argvm");
-		exit(1);
-	}
-	char* tok = strtok(s," \0");
-	argv[0] = tok;
-	// Start i at 3 to ensure there is enough space
-	int j = 0;
-	for(int i = 3; tok != NULL; i++)
-	{
-		// Actual index
-		j = i-2;
-		tok = strtok(NULL," \0");
-		if (tok != NULL)
-		{
-			printf("%s\n",tok);
-			argv = realloc(argv,i*sizeof(char*));
-			if (argv == NULL)
-			{
-				perror("argvr");
-				exit(1);
-			}
-			argv[j] = tok;
-		}
-		else
-		{
-			// Setup array for execvp
-			argv[j] = NULL;
-		}
-	}
-	return argv;
+	return tokenize(s,' ');
 }
 char* getexec(char* s)
 {
