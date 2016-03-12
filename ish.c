@@ -27,8 +27,6 @@
 #include <sys/wait.h>
 #include <string.h>
 
-#include "token.h"
-
 void prompt()
 {
 	// TODO: Actual prompt with PS1 and stuff
@@ -37,17 +35,47 @@ void prompt()
 
 char** getargv(char* s)
 {
-	char** t = tokenize(s,' ');
-	if (t == NULL) perror("ish tokenize");
-	else return t;
-	return NULL;
+	char* arg = strtok(s," ");
+	if (arg == NULL)
+	{
+		perror("ish strtok argv");
+		return NULL;
+	}
+	size_t argc = sizeof(char*)*2;
+	int i = 1;
+	char** argv = malloc(argc);
+	if (argv == NULL)
+	{
+		perror("ish argv malloc");
+		return NULL;
+	}
+	argv[0] = arg;
+	while (arg != NULL)
+	{
+		arg = strtok(NULL," ");
+		if (arg == NULL) continue;
+		argc += sizeof(char*);
+		argv = realloc(argv,argc);
+		if (argv == NULL)
+		{
+			perror("ish argv realloc");
+			free(argv);
+			return NULL;
+		}
+		argv[i] = arg;
+		i++;
+	}
+	argv[i] = NULL;
+	return argv;
 }
 
 int run (char* s)
 {
-	int pid = fork();
 	int r = 0;
 	char** argv = getargv(s);
+	// TODO Error handling 
+	if (argv == NULL) exit(1);
+	int pid = fork();
 	//printf("exec: %s argv[0]: %s\n",exec,argv[0]);
 	switch (pid)
 	{
@@ -60,6 +88,7 @@ int run (char* s)
 			perror("ish fork");
 		default:
 			waitpid(pid,&r,0);
+			free(argv);
 	}
 	return 0;
 }
@@ -67,13 +96,11 @@ int run (char* s)
 void eval(char* s)
 {
 	run(s);
-	// Wipe array when done
-	memset(s,0,sizeof(s));
 }
 
 int main (int argc, char** argv)
 {
-	char c;
+	char c = 1;
 	int bufsize = 100;
 	int curbuf = 0;
 	char* buf = (char*)malloc(bufsize);
@@ -88,7 +115,7 @@ int main (int argc, char** argv)
 	{
 		// Passed a script
 		// Run non-interactive
-		FILE* r = freopen(argv[1],"r",stdin);
+		freopen(argv[1],"r",stdin);
 		interactive = 0;
 	}
 	else
@@ -103,6 +130,8 @@ int main (int argc, char** argv)
 			case '\n':
 				if (interactive) prompt();
 				eval(buf);
+				// Wipe array when done
+				memset(buf,0,bufsize);
 				curbuf = 0;
 				break;
 			case EOF:
@@ -120,6 +149,7 @@ int main (int argc, char** argv)
 					if (buf == NULL)
 					{
 						perror("ish realloc");
+						free(buf);
 						return 1;
 					}
 				}
