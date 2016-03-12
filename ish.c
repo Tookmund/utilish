@@ -38,7 +38,7 @@ void prompt()
 char** getargv(char* s)
 {
 	char** t = tokenize(s,' ');
-	if (t == NULL) perror("tokenize");
+	if (t == NULL) perror("ish tokenize");
 	else return t;
 	return NULL;
 }
@@ -54,10 +54,10 @@ int run (char* s)
 		case 0:
 			execvp(argv[0],argv);
 			// Only returns if something went wrong
-			perror("execvp");
+			perror("ish execvp");
 			break;
 		case -1:
-			perror("fork");
+			perror("ish fork");
 		default:
 			waitpid(pid,&r,0);
 	}
@@ -119,7 +119,7 @@ int main (int argc, char** argv)
 					buf = realloc(buf,bufsize);
 					if (buf == NULL)
 					{
-						perror("realloc");
+						perror("ish realloc");
 						return 1;
 					}
 				}
