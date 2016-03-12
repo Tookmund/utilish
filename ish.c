@@ -27,7 +27,6 @@
 #include <sys/wait.h>
 #include <string.h>
 
-#include "ish.h"
 #include "token.h"
 
 void prompt()
@@ -36,11 +35,14 @@ void prompt()
 	printf("[$] ");
 }
 
-void eval(char* s)
+char** getargv(char* s)
 {
-	run(s);
-	// Wipe array when done
-	memset(s,0,sizeof(s));
+	return tokenize(s,' ');
+}
+
+char* getexec(char* s)
+{
+	return strtok(s," ");
 }
 
 int run (char* s)
@@ -64,14 +66,14 @@ int run (char* s)
 	}
 	return 0;
 }
-char** getargv(char* s)
+
+void eval(char* s)
 {
-	return tokenize(s,' ');
+	run(s);
+	// Wipe array when done
+	memset(s,0,sizeof(s));
 }
-char* getexec(char* s)
-{
-	return strtok(s," ");
-}
+
 int main (int argc, char** argv)
 {
 	char c;
