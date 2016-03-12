@@ -26,91 +26,53 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <signal.h>
 
-void prompt()
-{
-	// TODO: Actual prompt with PS1 and stuff
-	printf("[$] ");
-}
+#include "ish.h"
 
-char** getargv(char* s, char* delim)
-{
-	char* arg = strtok(s,delim);
-	if (arg == NULL)
-	{
-		perror("ish strtok argv");
-		return NULL;
-	}
-	size_t argc = sizeof(char*)*2;
-	int i = 1;
-	char** argv = malloc(argc);
-	if (argv == NULL)
-	{
-		perror("ish argv malloc");
-		return NULL;
-	}
-	argv[0] = arg;
-	while (arg != NULL)
-	{
-		arg = strtok(NULL,delim);
-		if (arg == NULL) continue;
-		argc += sizeof(char*);
-		argv = realloc(argv,argc);
-		if (argv == NULL)
-		{
-			perror("ish argv realloc");
-			free(argv);
-			return NULL;
-		}
-		argv[i] = arg;
-		i++;
-	}
-	argv[i] = NULL;
-	return argv;
-}
-
-int run (char* s,int in,int out)
-{
-	int r = 0;
-	char** argv = getargv(s," ");
-	// TODO Error handling
-	if (argv == NULL) exit(1);
-	int pid = fork();
-	//printf("exec: %s argv[0]: %s\n",exec,argv[0]);
-	switch (pid)
-	{
-		case 0:
-			if (in != 0) dup2(0,in);
-			if (out != 1) dup2(1,out);
-			execvp(argv[0],argv);
-			// Only returns if something went wrong
-			perror("ish execvp");
-			break;
-		case -1:
-			perror("ish fork");
-		default:
-			waitpid(pid,&r,0);
-			free(argv);
-	}
-	return 0;
-}
+// Not sure why this is a thing but whatever
+typedef void (*sighandler_t)(int);
 
 void eval(char* s, int pipes)
 {
+	if (checkkeywords(s)) return;
 	if (!pipes) run(s,0,1);
 	else
 	{
 		char** programs = getargv(s,"|");
-		if (programs == NULL) exit(1);
+		if (programs == NULL) return;
+		int* oldpipes = NULL;
+		int* newpipes = NULL;
 		for (int i = 0; i <= pipes; i++)
 		{
-			
+			newpipes = malloc(sizeof(int)*2);
+			if (newpipes == NULL)
+			{
+				perror("ish malloc newpipes");
+				return;
+			}
+			int p = pipe(newpipes);
+			if (p < 0)
+			{
+				perror("ish pipe");
+				return;
+			}
+			if (programs[i+1] == NULL) newpipes[1] = 1;
+			if (oldpipes == NULL) run(programs[i],0,newpipes[1]);
+			else run(programs[i],oldpipes[0],newpipes[1]);
+			free(oldpipes);
+			oldpipes = newpipes;
 		}
 	}
+	// Allow everything to finish up
+	wait(NULL);
+
 }
 
 int main (int argc, char** argv)
 {
+	sighandler_t sig = signal(SIGINT,sigint);
+	if (sig == SIG_ERR) perror("ish sigint");
 	char c = 1;
 	int bufsize = 100;
 	int curbuf = 0;
@@ -140,12 +102,12 @@ int main (int argc, char** argv)
 		switch(c)
 		{
 			case '\n':
-				if (interactive) prompt();
 				eval(buf,pipes);
 				// Wipe array when done
 				memset(buf,0,bufsize);
 				curbuf = 0;
 				pipes = 0;
+				if (interactive) prompt();
 				break;
 			case EOF:
 				break;
