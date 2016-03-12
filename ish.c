@@ -37,25 +37,22 @@ void prompt()
 
 char** getargv(char* s)
 {
-	return tokenize(s,' ');
-}
-
-char* getexec(char* s)
-{
-	return strtok(s," ");
+	char** t = tokenize(s,' ');
+	if (t == NULL) perror("tokenize");
+	else return t;
+	return NULL;
 }
 
 int run (char* s)
 {
 	int pid = fork();
 	int r = 0;
-	char* exec = getexec(s);
 	char** argv = getargv(s);
 	//printf("exec: %s argv[0]: %s\n",exec,argv[0]);
 	switch (pid)
 	{
 		case 0:
-			execvp(exec,argv);
+			execvp(argv[0],argv);
 			// Only returns if something went wrong
 			perror("execvp");
 			break;
