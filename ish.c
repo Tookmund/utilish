@@ -33,9 +33,9 @@ void prompt()
 	printf("[$] ");
 }
 
-char** getargv(char* s)
+char** getargv(char* s, char* delim)
 {
-	char* arg = strtok(s," ");
+	char* arg = strtok(s,delim);
 	if (arg == NULL)
 	{
 		perror("ish strtok argv");
@@ -52,7 +52,7 @@ char** getargv(char* s)
 	argv[0] = arg;
 	while (arg != NULL)
 	{
-		arg = strtok(NULL," ");
+		arg = strtok(NULL,delim);
 		if (arg == NULL) continue;
 		argc += sizeof(char*);
 		argv = realloc(argv,argc);
@@ -69,17 +69,19 @@ char** getargv(char* s)
 	return argv;
 }
 
-int run (char* s)
+int run (char* s,int in,int out)
 {
 	int r = 0;
-	char** argv = getargv(s);
-	// TODO Error handling 
+	char** argv = getargv(s," ");
+	// TODO Error handling
 	if (argv == NULL) exit(1);
 	int pid = fork();
 	//printf("exec: %s argv[0]: %s\n",exec,argv[0]);
 	switch (pid)
 	{
 		case 0:
+			if (in != 0) dup2(0,in);
+			if (out != 1) dup2(1,out);
 			execvp(argv[0],argv);
 			// Only returns if something went wrong
 			perror("ish execvp");
@@ -93,9 +95,18 @@ int run (char* s)
 	return 0;
 }
 
-void eval(char* s)
+void eval(char* s, int pipes)
 {
-	run(s);
+	if (!pipes) run(s,0,1);
+	else
+	{
+		char** programs = getargv(s,"|");
+		if (programs == NULL) exit(1);
+		for (int i = 0; i <= pipes; i++)
+		{
+			
+		}
+	}
 }
 
 int main (int argc, char** argv)
@@ -122,6 +133,7 @@ int main (int argc, char** argv)
 	{
 		prompt();
 	}
+	int pipes = 0;
 	while (c != EOF)
 	{
 		c = getchar();
@@ -129,13 +141,16 @@ int main (int argc, char** argv)
 		{
 			case '\n':
 				if (interactive) prompt();
-				eval(buf);
+				eval(buf,pipes);
 				// Wipe array when done
 				memset(buf,0,bufsize);
 				curbuf = 0;
+				pipes = 0;
 				break;
 			case EOF:
 				break;
+			case '|':
+				pipes++;
 			default:
 				if (curbuf < bufsize)
 				{
