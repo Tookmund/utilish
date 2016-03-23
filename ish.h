@@ -58,11 +58,24 @@ char** getargv(char* s, char* delim)
 	return argv;
 }
 
+int checkkeywords (char** argv)
+{
+	int ret = 1;
+	if (strcmp(argv[0],"exit") == 0) exit(0);
+	else if (strcmp(argv[0],"cd") == 0)
+	{
+		if (argv[1] != NULL) chdir(argv[1]);
+		else chdir(getenv("HOME"));
+	}
+	else ret = 0;
+	return ret;
+}
+
 int run (char* s,int in,int out)
 {
 	char** argv = getargv(s," ");
-	// TODO Error handling
 	if (argv == NULL) return -1;
+	if (checkkeywords(argv)) return 0;
 	int pid = fork();
 	switch (pid)
 	{
@@ -80,13 +93,4 @@ int run (char* s,int in,int out)
 			return pid;
 	}
 	return 0;
-}
-
-int checkkeywords (char* s)
-{
-	int ret = 1;
-	if (strcmp(s,"exit") == 0) exit(0);
-
-	else ret = 0;
-	return ret;
 }
