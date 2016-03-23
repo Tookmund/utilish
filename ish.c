@@ -35,8 +35,7 @@ typedef void (*sighandler_t)(int);
 
 void eval(char* s, int pipes)
 {
-	int* pids = malloc(sizeof(int*)*(pipes+1));
-	if (checkkeywords(s)) return;
+	pid_t* pids = malloc(sizeof(pid_t*)*(pipes+1));
 	if (!pipes) pids[0] = run(s,0,1);
 	else
 	{
