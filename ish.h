@@ -90,6 +90,8 @@ int run (char* s,int in,int out)
 			perror("ish fork");
 		default:
 			free(argv);
+			if (in != 0) close(in);
+			if (out != 1) close(out);
 			return pid;
 	}
 	return 0;
