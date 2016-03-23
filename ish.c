@@ -66,12 +66,11 @@ void eval(char* s, int pipes)
 	}
 	// Allow everything to finish up
 	wait(NULL);
-
 }
 
 int main (int argc, char** argv)
 {
-	sighandler_t sig = signal(SIGINT,sigint);
+	sighandler_t sig = signal(SIGINT,SIG_IGN);
 	if (sig == SIG_ERR) perror("ish sigint");
 	char c = 1;
 	int bufsize = 100;

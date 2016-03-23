@@ -89,6 +89,3 @@ int checkkeywords (char* s)
 	else ret = 0;
 	return ret;
 }
-
-void sigint(int n)
-{}
