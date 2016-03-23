@@ -35,8 +35,9 @@ typedef void (*sighandler_t)(int);
 
 void eval(char* s, int pipes)
 {
+	int* pids = malloc(sizeof(int*)*(pipes+1));
 	if (checkkeywords(s)) return;
-	if (!pipes) run(s,0,1);
+	if (!pipes) pids[0] = run(s,0,1);
 	else
 	{
 		char** programs = getargv(s,"|");
@@ -58,14 +59,17 @@ void eval(char* s, int pipes)
 				return;
 			}
 			if (programs[i+1] == NULL) newpipes[1] = 1;
-			if (oldpipes == NULL) run(programs[i],0,newpipes[1]);
-			else run(programs[i],oldpipes[0],newpipes[1]);
+			if (oldpipes == NULL) pids[i] = run(programs[i],0,newpipes[1]);
+			else pids[i] = run(programs[i],oldpipes[0],newpipes[1]);
 			free(oldpipes);
 			oldpipes = newpipes;
 		}
 	}
 	// Allow everything to finish up
-	wait(NULL);
+	for (int i = 0; i <= pipes; i++)
+	{
+		waitpid(pids[i],NULL,0);
+	}
 }
 
 int main (int argc, char** argv)

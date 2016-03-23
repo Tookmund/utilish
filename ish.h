@@ -77,6 +77,7 @@ int run (char* s,int in,int out)
 			perror("ish fork");
 		default:
 			free(argv);
+			return pid;
 	}
 	return 0;
 }
