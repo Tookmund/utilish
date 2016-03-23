@@ -113,6 +113,7 @@ int main (int argc, char** argv)
 				if (interactive) prompt();
 				break;
 			case EOF:
+				return 0;
 				break;
 			case '|':
 				pipes++;
